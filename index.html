@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Генератор QR-кодов</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            padding: 20px;
+            transition: background 0.3s ease;
+            color: #1F2937;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.98);
+            padding: 2.5rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 1000px;
+            position: relative;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 2.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .main-content {
+            flex: 1;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #111827;
+            letter-spacing: -0.025em;
+        }
+
+        .history-panel {
+            background: #F9FAFB;
+            padding: 1.5rem;
+            border-radius: 16px;
+            max-height: 700px;
+            overflow-y: auto;
+            border: 1px solid #E5E7EB;
+        }
+
+        .history-panel h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #374151;
+        }
+
+        .history-item {
+            background: white;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border: 1px solid #E5E7EB;
+        }
+
+        .history-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-color: #4F46E5;
+        }
+
+        .history-item img {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .controls {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .control-btn {
+            background: #F3F4F6;
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0.75rem;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4B5563;
+        }
+
+        .control-btn:hover {
+            background: #4F46E5;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            background: #F9FAFB;
+            border-radius: 16px;
+            padding: 0.5rem;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            border: 1px solid #E5E7EB;
+        }
+
+        .tab {
+            flex: 1;
+            min-width: 120px;
+            padding: 0.75rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            color: #6B7280;
+        }
+
+        .tab:hover {
+            background: rgba(79, 70, 229, 0.1);
+            color: #4F46E5;
+        }
+
+        .tab.active {
+            background: #4F46E5;
+            color: white;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            margin-bottom: 1rem;
+            background: white;
+            color: #1F2937;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+        .color-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .color-input {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .color-input label {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .preset-colors {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .preset-color {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 2px solid #E5E7EB;
+            transition: all 0.2s ease;
+        }
+
+        .preset-color:hover {
+            transform: scale(1.1);
+            border-color: #4F46E5;
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: #4F46E5;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        button:hover {
+            background: #4338CA;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #qrcode {
+            margin-top: 2rem;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid #E5E7EB;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        #download-btn {
+            background: #059669;
+        }
+
+        #download-btn:hover {
+            background: #047857;
+        }
+
+        #copy-btn {
+            background: #7C3AED;
+        }
+
+        #copy-btn:hover {
+            background: #6D28D9;
+        }
+
+        #share-btn {
+            background: #2563EB;
+        }
+
+        #share-btn:hover {
+            background: #1D4ED8;
+        }
+
+        .dark-theme {
+            background: linear-gradient(135deg, #312E81 0%, #4C1D95 100%);
+            color: #F9FAFB;
+        }
+
+        .dark-theme .container {
+            background: rgba(17, 24, 39, 0.98);
+        }
+
+        .dark-theme h1 {
+            color: #F9FAFB;
+        }
+
+        .dark-theme input,
+        .dark-theme select,
+        .dark-theme textarea {
+            background: #1F2937;
+            border-color: #374151;
+            color: #F9FAFB;
+        }
+
+        .dark-theme .history-panel {
+            background: #111827;
+            border-color: #374151;
+        }
+
+        .dark-theme .history-item {
+            background: #1F2937;
+            border-color: #374151;
+        }
+
+        .dark-theme .tabs {
+            background: #111827;
+            border-color: #374151;
+        }
+
+        .dark-theme .tab {
+            color: #D1D5DB;
+        }
+
+        .dark-theme .tab:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .dark-theme .control-btn {
+            background: #1F2937;
+            color: #D1D5DB;
+        }
+
+        .dark-theme .color-input label {
+            color: #D1D5DB;
+        }
+
+        .dark-theme #qrcode {
+            background: #1F2937;
+            border-color: #374151;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1F2937;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                padding: 1.5rem;
+            }
+
+            .history-panel {
+                max-height: 300px;
+            }
+
+            .tabs {
+                overflow-x: auto;
+                white-space: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .tab {
+                min-width: auto;
+                flex: none;
+                padding: 0.75rem;
+            }
+
+            .color-inputs {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Добавляем красивую прокрутку */
+        .history-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .history-panel::-webkit-scrollbar-track {
+            background: #F3F4F6;
+            border-radius: 4px;
+        }
+
+        .history-panel::-webkit-scrollbar-thumb {
+            background: #D1D5DB;
+            border-radius: 4px;
+        }
+
+        .history-panel::-webkit-scrollbar-thumb:hover {
+            background: #9CA3AF;
+        }
+
+        .dark-theme .history-panel::-webkit-scrollbar-track {
+            background: #1F2937;
+        }
+
+        .dark-theme .history-panel::-webkit-scrollbar-thumb {
+            background: #4B5563;
+        }
+
+        .dark-theme .history-panel::-webkit-scrollbar-thumb:hover {
+            background: #6B7280;
+        }
+
+        /* Добавляем анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .history-item {
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Улучшаем стили для range input */
+        input[type="range"] {
+            -webkit-appearance: none;
+            height: 6px;
+            background: #E5E7EB;
+            border-radius: 3px;
+            border: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #4F46E5;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        .dark-theme input[type="range"] {
+            background: #374151;
+        }
+
+        /* Улучшаем стили для color input */
+        input[type="color"] {
+            -webkit-appearance: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            border: 2px solid #E5E7EB;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 8px;
+        }
+
+        .dark-theme input[type="color"] {
+            border-color: #374151;
+        }
+
+        .share-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .share-modal.show {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .share-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .dark-theme .share-content {
+            background: #1F2937;
+            color: #F9FAFB;
+        }
+
+        .share-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .share-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            border-radius: 12px;
+            background: #F3F4F6;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .dark-theme .share-option {
+            background: #374151;
+        }
+
+        .share-option:hover {
+            background: #E5E7EB;
+            transform: translateY(-2px);
+        }
+
+        .dark-theme .share-option:hover {
+            background: #4B5563;
+        }
+
+        .share-option i {
+            font-size: 1.5rem;
+            color: #4F46E5;
+        }
+
+        .share-option span {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6B7280;
+            padding: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .close-modal:hover {
+            color: #4F46E5;
+            transform: rotate(90deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-content">
+            <div class="controls">
+                <button class="control-btn theme-switch" onclick="toggleTheme()" title="Сменить тему">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="control-btn" onclick="clearHistory()" title="Очистить историю">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+
+            <h1>Генератор QR-кодов</h1>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('text')">
+                    <i class="fas fa-font"></i>
+                    <span>Текст</span>
+                </div>
+                <div class="tab" onclick="switchTab('url')">
+                    <i class="fas fa-link"></i>
+                    <span>URL</span>
+                </div>
+                <div class="tab" onclick="switchTab('vcard')">
+                    <i class="fas fa-address-card"></i>
+                    <span>VCard</span>
+                </div>
+                <div class="tab" onclick="switchTab('wifi')">
+                    <i class="fas fa-wifi"></i>
+                    <span>Wi-Fi</span>
+                </div>
+                <div class="tab" onclick="switchTab('geo')">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Геолокация</span>
+                </div>
+            </div>
+
+            <div id="text-input" class="input-group">
+                <textarea id="inputText" placeholder="Введите текст или ссылку" rows="3"></textarea>
+            </div>
+
+            <div id="url-input" class="input-group" style="display: none;">
+                <input type="url" id="inputUrl" placeholder="https://example.com">
+            </div>
+
+            <div id="vcard-input" class="input-group" style="display: none;">
+                <input type="text" id="inputName" placeholder="Имя">
+                <input type="tel" id="inputPhone" placeholder="Телефон">
+                <input type="email" id="inputEmail" placeholder="Email">
+                <input type="text" id="inputOrg" placeholder="Организация">
+            </div>
+
+            <div id="wifi-input" class="input-group" style="display: none;">
+                <input type="text" id="inputSsid" placeholder="Имя сети (SSID)">
+                <input type="password" id="inputPassword" placeholder="Пароль">
+                <select id="inputWifiType">
+                    <option value="WPA">WPA/WPA2</option>
+                    <option value="WEP">WEP</option>
+                    <option value="nopass">Без пароля</option>
+                </select>
+            </div>
+
+            <div id="geo-input" class="input-group" style="display: none;">
+                <input type="number" id="inputLat" placeholder="Широта" step="0.000001">
+                <input type="number" id="inputLng" placeholder="Долгота" step="0.000001">
+                <button onclick="getCurrentLocation()" class="secondary-btn">
+                    <i class="fas fa-location-arrow"></i>
+                    Определить местоположение
+                </button>
+            </div>
+
+            <div class="advanced-options">
+                <div class="option-group">
+                    <label>Уровень коррекции ошибок:</label>
+                    <select id="errorCorrection">
+                        <option value="L">Низкий (7%)</option>
+                        <option value="M">Средний (15%)</option>
+                        <option value="Q">Высокий (25%)</option>
+                        <option value="H" selected>Максимальный (30%)</option>
+                    </select>
+                </div>
+
+                <div class="option-group">
+                    <label>Размер QR-кода:</label>
+                    <div class="range-with-value">
+                        <input type="range" id="qrSize" min="128" max="512" step="32" value="256">
+                        <span class="range-value" id="qrSizeValue">256x256</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="color-inputs">
+                <div class="color-input tooltip">
+                    <label>Цвет QR:</label>
+                    <input type="color" id="colorDark" value="#000000">
+                    <span class="tooltiptext">Выберите цвет QR-кода</span>
+                </div>
+                <div class="color-input tooltip">
+                    <label>Цвет фона:</label>
+                    <input type="color" id="colorLight" value="#ffffff">
+                    <span class="tooltiptext">Выберите цвет фона</span>
+                </div>
+            </div>
+
+            <button onclick="generateQR()" id="generate-btn">
+                <i class="fas fa-qrcode"></i>
+                <span>Создать QR-код</span>
+            </button>
+
+            <div class="qr-preview">
+                <div class="corner-style corner-tl"></div>
+                <div class="corner-style corner-tr"></div>
+                <div class="corner-style corner-bl"></div>
+                <div class="corner-style corner-br"></div>
+                <div id="qrcode"></div>
+            </div>
+
+            <div class="button-group">
+                <button id="download-btn" onclick="downloadQR()" style="display: none;">
+                    <i class="fas fa-download"></i>
+                    <span>Скачать</span>
+                </button>
+                <button id="copy-btn" onclick="copyQR()" style="display: none;">
+                    <i class="fas fa-copy"></i>
+                    <span>Копировать</span>
+                </button>
+                <button id="share-btn" onclick="shareQR()" style="display: none;">
+                    <i class="fas fa-share-alt"></i>
+                    <span>Поделиться</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="history-panel">
+            <h2>История</h2>
+            <div id="history-list"></div>
+        </div>
+
+        <div class="toast" id="toast"></div>
+    </div>
+
+    <div class="share-modal" id="share-modal">
+        <div class="share-content">
+            <button class="close-modal" onclick="closeShareModal()">&times;</button>
+            <h2>Поделиться QR-кодом</h2>
+            <div class="share-options">
+                <div class="share-option" onclick="shareQRViaEmail()">
+                    <i class="fas fa-envelope"></i>
+                    <span>Почта</span>
+                </div>
+                <div class="share-option" onclick="shareQRViaWhatsApp()">
+                    <i class="fab fa-whatsapp"></i>
+                    <span>WhatsApp</span>
+                </div>
+                <div class="share-option" onclick="shareQRViaTelegram()">
+                    <i class="fab fa-telegram"></i>
+                    <span>Telegram</span>
+                </div>
+                <div class="share-option" onclick="shareQRViaSMS()">
+                    <i class="fas fa-sms"></i>
+                    <span>SMS</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let qrInstance = null;
+        let currentTab = 'text';
+        const history = JSON.parse(localStorage.getItem('qrHistory') || '[]');
+
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', () => {
+            updateHistoryPanel();
+            initRangeInputs();
+            loadTheme();
+        });
+
+        function initRangeInputs() {
+            const qrSizeInput = document.getElementById('qrSize');
+            const qrSizeValue = document.getElementById('qrSizeValue');
+            
+            qrSizeInput.addEventListener('input', () => {
+                qrSizeValue.textContent = `${qrSizeInput.value}x${qrSizeInput.value}`;
+            });
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+            updateThemeIcon();
+        }
+
+        function loadTheme() {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'dark') {
+                document.body.classList.add('dark-theme');
+            }
+            updateThemeIcon();
+        }
+
+        function updateThemeIcon() {
+            const icon = document.querySelector('.theme-switch i');
+            icon.className = document.body.classList.contains('dark-theme') ? 
+                'fas fa-sun' : 'fas fa-moon';
+        }
+
+        function toggleAdvancedOptions() {
+            const advancedOptions = document.querySelector('.advanced-options');
+            advancedOptions.classList.toggle('show');
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab:nth-child(${
+                tab === 'text' ? 1 : 
+                tab === 'url' ? 2 : 
+                tab === 'vcard' ? 3 : 
+                tab === 'wifi' ? 4 : 5
+            })`).classList.add('active');
+
+            // Скрываем все input группы
+            document.querySelectorAll('.input-group').forEach(group => group.style.display = 'none');
+            // Показываем нужную группу
+            document.getElementById(`${tab}-input`).style.display = 'block';
+        }
+
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        document.getElementById('inputLat').value = position.coords.latitude;
+                        document.getElementById('inputLng').value = position.coords.longitude;
+                    },
+                    (error) => {
+                        alert('Ошибка при получении геолокации: ' + error.message);
+                    }
+                );
+            } else {
+                alert('Геолокация не поддерживается вашим браузером');
+            }
+        }
+
+        function setColors(dark, light) {
+            document.getElementById('colorDark').value = dark;
+            document.getElementById('colorLight').value = light;
+            if (qrInstance) generateQR();
+        }
+
+        function createVCard() {
+            const name = document.getElementById('inputName').value;
+            const phone = document.getElementById('inputPhone').value;
+            const email = document.getElementById('inputEmail').value;
+            const org = document.getElementById('inputOrg').value;
+
+            return `BEGIN:VCARD
+VERSION:3.0
+FN:${name}
+TEL:${phone}
+EMAIL:${email}
+ORG:${org}
+END:VCARD`;
+        }
+
+        function createWifiString() {
+            const ssid = document.getElementById('inputSsid').value;
+            const password = document.getElementById('inputPassword').value;
+            const type = document.getElementById('inputWifiType').value;
+
+            return `WIFI:T:${type};S:${ssid};P:${password};;`;
+        }
+
+        function createGeoString() {
+            const lat = document.getElementById('inputLat').value;
+            const lng = document.getElementById('inputLng').value;
+
+            return `geo:${lat},${lng}`;
+        }
+
+        async function generateQR() {
+            let text;
+            let description;
+            
+            switch(currentTab) {
+                case 'text':
+                    text = document.getElementById('inputText').value;
+                    description = text.substring(0, 30) + (text.length > 30 ? '...' : '');
+                    break;
+                case 'url':
+                    text = document.getElementById('inputUrl').value;
+                    if (text && !text.startsWith('http')) {
+                        text = 'https://' + text;
+                    }
+                    description = 'URL: ' + text;
+                    break;
+                case 'vcard':
+                    text = createVCard();
+                    description = 'VCard: ' + document.getElementById('inputName').value;
+                    break;
+                case 'wifi':
+                    text = createWifiString();
+                    description = 'Wi-Fi: ' + document.getElementById('inputSsid').value;
+                    break;
+                case 'geo':
+                    text = createGeoString();
+                    description = 'Геолокация';
+                    break;
+            }
+
+            if (!text) {
+                alert("Пожалуйста, заполните необходимые поля!");
+                return;
+            }
+
+            const generateBtn = document.getElementById('generate-btn');
+            generateBtn.classList.add('loading');
+            generateBtn.disabled = true;
+
+            // Очищаем предыдущий QR-код
+            document.getElementById("qrcode").innerHTML = "";
+            
+            const size = parseInt(document.getElementById("qrSize").value);
+            const colorDark = document.getElementById("colorDark").value;
+            const colorLight = document.getElementById("colorLight").value;
+            const errorCorrection = document.getElementById("errorCorrection").value;
+
+            // Показываем блок QR-кода перед генерацией
+            document.getElementById("qrcode").style.display = "flex";
+
+            // Генерируем новый QR-код
+            qrInstance = new QRCode(document.getElementById("qrcode"), {
+                text: text,
+                width: size,
+                height: size,
+                colorDark: colorDark,
+                colorLight: colorLight,
+                correctLevel: QRCode.CorrectLevel[errorCorrection]
+            });
+
+            // Добавляем в историю
+            const historyItem = {
+                text: description,
+                date: new Date().toLocaleString(),
+                type: currentTab,
+                preview: document.querySelector("#qrcode canvas").toDataURL()
+            };
+
+            history.unshift(historyItem);
+            if (history.length > 10) history.pop();
+            localStorage.setItem('qrHistory', JSON.stringify(history));
+            updateHistoryPanel();
+
+            // Показываем кнопки действий
+            setTimeout(() => {
+                document.getElementById("download-btn").style.display = "block";
+                document.getElementById("copy-btn").style.display = "block";
+                document.getElementById("share-btn").style.display = "block";
+                generateBtn.classList.remove('loading');
+                generateBtn.disabled = false;
+            }, 500);
+        }
+
+        function updateHistoryPanel() {
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = '';
+
+            history.forEach((item, index) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.innerHTML = `
+                    <img src="${item.preview}" alt="QR Preview">
+                    <div class="history-item-info">
+                        <div>${item.text}</div>
+                        <div class="history-item-date">${item.date}</div>
+                    </div>
+                `;
+                historyItem.onclick = () => restoreFromHistory(index);
+                historyList.appendChild(historyItem);
+            });
+        }
+
+        function restoreFromHistory(index) {
+            const item = history[index];
+            switchTab(item.type);
+            // Здесь можно добавить логику восстановления значений полей
+            generateQR();
+        }
+
+        function clearHistory() {
+            if (confirm('Вы уверены, что хотите очистить историю?')) {
+                history.length = 0;
+                localStorage.removeItem('qrHistory');
+                updateHistoryPanel();
+            }
+        }
+
+        async function downloadQR() {
+            const qrCanvas = document.querySelector("#qrcode canvas");
+            if (!qrCanvas) return;
+
+            try {
+                const link = document.createElement('a');
+                link.download = 'qr-code.png';
+                link.href = qrCanvas.toDataURL('image/png');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                console.error('Ошибка при скачивании:', error);
+                alert('Произошла ошибка при скачивании QR-кода');
+            }
+        }
+
+        async function copyQR() {
+            const qrCanvas = document.querySelector("#qrcode canvas");
+            if (!qrCanvas) return;
+
+            try {
+                // Создаем временный canvas для добавления белого фона
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCanvas.width = qrCanvas.width;
+                tempCanvas.height = qrCanvas.height;
+
+                // Добавляем белый фон
+                tempCtx.fillStyle = '#ffffff';
+                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                
+                // Копируем QR-код
+                tempCtx.drawImage(qrCanvas, 0, 0);
+
+                // Конвертируем в blob
+                const blob = await new Promise(resolve => tempCanvas.toBlob(resolve));
+                
+                try {
+                    // Пробуем использовать новый API буфера обмена
+                    await navigator.clipboard.write([
+                        new ClipboardItem({
+                            'image/png': blob
+                        })
+                    ]);
+                    showToast('QR-код скопирован в буфер обмена!');
+                } catch (e) {
+                    // Если новый API не поддерживается, пробуем старый метод
+                    const data = new ClipboardItem({
+                        'image/png': blob
+                    });
+                    await navigator.clipboard.write([data]);
+                    showToast('QR-код скопирован в буфер обмена!');
+                }
+            } catch (error) {
+                console.error('Ошибка при копировании:', error);
+                showToast('Ошибка при копировании QR-кода', true);
+            }
+        }
+
+        async function shareQR() {
+            const qrCanvas = document.querySelector("#qrcode canvas");
+            if (!qrCanvas) return;
+
+            try {
+                const blob = await new Promise(resolve => qrCanvas.toBlob(resolve));
+                const file = new File([blob], 'qr-code.png', { type: 'image/png' });
+                
+                if (navigator.share) {
+                    await navigator.share({
+                        files: [file],
+                        title: 'QR Code',
+                        text: 'Сгенерированный QR-код'
+                    });
+                } else {
+                    // Показываем модальное окно с альтернативными способами поделиться
+                    document.getElementById('share-modal').classList.add('show');
+                }
+            } catch (error) {
+                console.error('Ошибка при попытке поделиться:', error);
+                showToast('Произошла ошибка при попытке поделиться', true);
+            }
+        }
+
+        function closeShareModal() {
+            document.getElementById('share-modal').classList.remove('show');
+        }
+
+        async function getQRImageUrl() {
+            const qrCanvas = document.querySelector("#qrcode canvas");
+            if (!qrCanvas) return null;
+            return qrCanvas.toDataURL('image/png');
+        }
+
+        async function shareQRViaEmail() {
+            const imageUrl = await getQRImageUrl();
+            if (!imageUrl) return;
+            
+            const subject = encodeURIComponent('QR Code');
+            const body = encodeURIComponent('Вот ваш QR-код:\n\n');
+            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+            closeShareModal();
+        }
+
+        async function shareQRViaWhatsApp() {
+            const imageUrl = await getQRImageUrl();
+            if (!imageUrl) return;
+            
+            const text = encodeURIComponent('Вот ваш QR-код');
+            window.open(`https://wa.me/?text=${text}`, '_blank');
+            closeShareModal();
+        }
+
+        async function shareQRViaTelegram() {
+            const imageUrl = await getQRImageUrl();
+            if (!imageUrl) return;
+            
+            const text = encodeURIComponent('Вот ваш QR-код');
+            window.open(`https://t.me/share/url?url=${text}`, '_blank');
+            closeShareModal();
+        }
+
+        async function shareQRViaSMS() {
+            const text = encodeURIComponent('Вот ваш QR-код');
+            window.location.href = `sms:?body=${text}`;
+            closeShareModal();
+        }
+
+        // Закрываем модальное окно при клике вне его содержимого
+        document.getElementById('share-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeShareModal();
+            }
+        });
+
+        // Закрываем модальное окно при нажатии Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && document.getElementById('share-modal').classList.contains('show')) {
+                closeShareModal();
+            }
+        });
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.background = isError ? 'rgba(229, 62, 62, 0.9)' : 'rgba(0, 0, 0, 0.8)';
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Автоматическая генерация QR-кода при изменении параметров
+        ['colorDark', 'colorLight', 'qrSize', 'errorCorrection'].forEach(id => {
+            document.getElementById(id).addEventListener('change', generateQR);
+        });
+    </script>
+</body>
+</html>
